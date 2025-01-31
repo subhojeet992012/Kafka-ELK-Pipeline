@@ -1,68 +1,69 @@
-Kafka-ELK Stack Setup
+# Kafka-ELK Stack Setup
 
 This repository contains a complete setup for integrating Apache Kafka with the ELK (Elasticsearch, Logstash, and Kibana) stack using Docker Compose.
 
-Table of Contents
+## Table of Contents
+- [Overview](#overview)
+- [Architecture](#architecture)
+- [Prerequisites](#prerequisites)
+- [Installation](#installation)
+- [Configuration](#configuration)
+- [Running the Setup](#running-the-setup)
+- [Verifying the Setup](#verifying-the-setup)
+- [Stopping and Cleaning Up](#stopping-and-cleaning-up)
 
-Overview
+---
 
-Architecture
-
-Prerequisites
-
-Installation
-
-Configuration
-
-Running the Setup
-
-Verifying the Setup
-
-Stopping and Cleaning Up
-
-Overview
-
+## Overview
 This project sets up:
-
-Kafka (with Zookeeper & Kafka Manager)
-
-ELK Stack (Elasticsearch, Logstash, Kibana)
-
-Kafka Producer (Python script to generate sample data)
+1. **Kafka** (with Zookeeper & Kafka Manager)
+2. **ELK Stack** (Elasticsearch, Logstash, Kibana)
+3. **Kafka Producer** (Python script to generate sample data)
 
 Kafka is used for message streaming, and Logstash processes Kafka messages before storing them in Elasticsearch. Kibana is used for visualization.
 
-Architecture
+---
 
+## Architecture
+
+```
 Kafka Producer → Kafka → Logstash → Elasticsearch → Kibana
+```
 
-Prerequisites
+---
 
-Docker & Docker Compose installed
+## Prerequisites
 
-Python 3 installed (for Kafka Producer)
+- Docker & Docker Compose installed
+- Python 3 installed (for Kafka Producer)
+- Internet access to pull required Docker images
 
-Internet access to pull required Docker images
+---
 
-Installation
+## Installation
 
-Clone the Repository
-
+### Clone the Repository
+```sh
 git clone <repo-url>
 cd <repo-directory>
+```
 
-Start Kafka Cluster
-
+### Start Kafka Cluster
+```sh
 docker-compose -f kafka-docker-compose.yaml up -d
+```
 
-Start ELK Stack
-
+### Start ELK Stack
+```sh
 docker-compose -f elastic-search-kibana-docker-compose.yaml up -d
+```
 
-Configuration
+---
 
-Kafka Configuration (kafka-docker-compose.yaml)
+## Configuration
 
+### Kafka Configuration (`kafka-docker-compose.yaml`)
+```yaml
 version: "3"
 services:
   zookeeper:
@@ -97,9 +98,10 @@ services:
       ZK_HOSTS: "zookeeper:2181"
       APPLICATION_SECRET: "random-secret"
       command: -Dpidfile.path=/dev/null
+```
 
-ELK Configuration (elastic-search-kibana-docker-compose.yaml)
-
+### ELK Configuration (`elastic-search-kibana-docker-compose.yaml`)
+```yaml
 version: '3.7'
 
 services:
@@ -152,9 +154,10 @@ services:
 volumes:
   elasticsearch-data-volume:
     driver: local
+```
 
-Logstash Configuration (logstash/pipeline/logstash.conf)
-
+### Logstash Configuration (`logstash/pipeline/logstash.conf`)
+```yaml
 input {
   kafka {
     bootstrap_servers => "54.227.194.172:9092"
@@ -173,9 +176,10 @@ output {
     index => "logstash-%{+YYYY.MM.dd}"
   }
 }
+```
 
-Kafka Producer (producer.py)
-
+### Kafka Producer (`producer.py`)
+```python
 from confluent_kafka import Producer
 from faker import Faker
 import json
@@ -215,37 +219,46 @@ if __name__ == "__main__":
 
         producer.flush()
         time.sleep(4)
+```
 
-Running the Setup
+---
 
-Start Kafka
+## Running the Setup
 
+### Start Kafka
+```sh
 docker-compose -f kafka-docker-compose.yaml up -d
+```
 
-Start ELK Stack
-
+### Start ELK Stack
+```sh
 docker-compose -f elastic-search-kibana-docker-compose.yaml up -d
+```
 
-Run the Kafka Producer
-
+### Run the Kafka Producer
+```sh
 python3 producer.py
+```
 
-Verifying the Setup
+---
 
-Open Kafka Manager at http://<server-ip>:9000
+## Verifying the Setup
 
-Open Elasticsearch at http://<server-ip>:9200
+- Open **Kafka Manager** at `http://<server-ip>:9000`
+- Open **Elasticsearch** at `http://<server-ip>:9200`
+- Open **Kibana** at `http://<server-ip>:5601`
 
-Open Kibana at http://<server-ip>:5601
+---
 
-Stopping and Cleaning Up
-
+## Stopping and Cleaning Up
+```sh
 docker-compose -f kafka-docker-compose.yaml down
 docker-compose -f elastic-search-kibana-docker-compose.yaml down
+```
 
 This will stop all services and remove associated containers.
 
-Conclusion
+---
 
+## Conclusion
 This setup enables streaming data from Kafka to Elasticsearch using Logstash and visualizing it in Kibana. 🚀
-
