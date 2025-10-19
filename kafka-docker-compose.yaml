@@ -1,0 +1,39 @@
+version: "3.8"
+
+services:
+  zookeeper:
+    image: ${ZOOKEEPER_IMAGE:-zookeeper}
+    restart: always
+    container_name: zookeeper
+    hostname: zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      ZOO_MY_ID: 1
+
+  kafka:
+    image: ${KAFKA_IMAGE:-wurstmeister/kafka}
+    container_name: kafka
+    ports:
+      - "${KAFKA_PORT:-9092}:${KAFKA_PORT:-9092}"
+    environment:
+      # Prefer the newer listeners/advertised listeners in production.
+      KAFKA_ADVERTISED_HOST_NAME: "${HOST_IP:-127.0.0.1}"
+      KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"
+      KAFKA_ADVERTISED_PORT: "${KAFKA_PORT:-9092}"
+    depends_on:
+      - zookeeper
+
+  kafka_manager:
+    image: ${KAFKA_MANAGER_IMAGE:-hlebalbau/kafka-manager:stable}
+    container_name: kafka-manager
+    restart: always
+    ports:
+      - "${KAFKA_MANAGER_PORT:-9000}:9000"
+    depends_on:
+      - zookeeper
+      - kafka
+    environment:
+      ZK_HOSTS: "zookeeper:2181"
+      APPLICATION_SECRET: "random-secret"
+

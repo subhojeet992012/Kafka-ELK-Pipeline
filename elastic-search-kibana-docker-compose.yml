@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  elasticsearch:
+    image: ${ES_IMAGE:-docker.elastic.co/elasticsearch/elasticsearch:7.4.0}
+    container_name: elasticsearch
+    restart: always
+    environment:
+      - xpack.security.enabled=false
+      - discovery.type=single-node
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    cap_add:
+      - IPC_LOCK
+    volumes:
+      - ${ELASTIC_DATA_VOLUME:-elasticsearch-data-volume}:/usr/share/elasticsearch/data
+    ports:
+      - "${ES_PORT:-9200}:9200"
+      - "9300:9300"
+
+  kibana:
+    image: ${KIBANA_IMAGE:-docker.elastic.co/kibana/kibana:7.4.0}
+    container_name: kibana
+    restart: always
+    environment:
+      - ELASTICSEARCH_HOSTS=http://${HOST_IP:-127.0.0.1}:${ES_PORT:-9200}
+    ports:
+      - "${KIBANA_PORT:-5601}:5601"
+    depends_on:
+      - elasticsearch
+
+  logstash:
+    image: ${LOGSTASH_IMAGE:-docker.elastic.co/logstash/logstash:7.4.0}
+    container_name: logstash
+    restart: always
+    environment:
+      HOST_IP: "${HOST_IP:-127.0.0.1}"
+      KAFKA_PORT: "${KAFKA_PORT:-9092}"
+      ES_PORT: "${ES_PORT:-9200}"
+    ports:
+      - "${LOGSTASH_PORT:-5044}:5044"
+    volumes:
+      - ${LOGSTASH_PIPELINE_DIR:-./logstash/pipeline}:/usr/share/logstash/pipeline
+    depends_on:
+      - elasticsearch
+
+volumes:
+  # named volume used by elasticsearch for persistent data
+  elasticsearch-data-volume:
+    driver: local
+
